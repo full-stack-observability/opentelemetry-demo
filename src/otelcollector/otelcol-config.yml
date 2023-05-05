@@ -10,13 +10,17 @@ receivers:
         cors:
           allowed_origins:
             - "http://*"
-            - "https://*"
+            - "https://*"          
 
 exporters:
   otlp:
-    endpoint: "jaeger:4317"
+    endpoint: "teletrace-api:4317"
     tls:
       insecure: true
+  otlphttp:
+    endpoint: "teletrace-api:4318"
+    tls:
+      insecure: true    
   logging:
   prometheus:
     endpoint: "otelcol:9464"
@@ -41,11 +45,11 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp, logging, spanmetrics]
+      exporters: [otlp, logging, spanmetrics, otlphttp]
     metrics:
       receivers: [otlp, spanmetrics]
       processors: [filter, batch]
-      exporters: [prometheus, logging]
+      exporters: [prometheus, logging,otlphttp]
     logs:
       receivers: [otlp]
       processors: [batch]

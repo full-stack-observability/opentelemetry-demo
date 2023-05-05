@@ -711,3 +711,44 @@ services:
       - recommendationservice
       - shippingservice
       - quoteservice
+
+  teletrace-api:
+    ports:
+      - "7080:8080"
+      - "5317:4317"
+      - "5318:4318"
+    command: ["--config=/etc/teletrace-collector-config.yaml"]
+    volumes:
+      - ./teletrace-otel-collector.yaml:/etc/teletrace-collector-config.yaml
+    environment:
+      - ES_ENDPOINT=http://elasticsearch:9200
+    image: teletrace/teletrace:latest
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:7080/v1/ping"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  elasticsearch:
+    image: elasticsearch:8.4.2
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: curl -s http://elasticsearch:9200 >/dev/null || exit 1
+      interval: 3s
+      timeout: 10s
+      retries: 50    
+
+
+volumes:
+  es_data:
+    driver: local
